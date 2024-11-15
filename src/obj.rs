@@ -1,11 +1,11 @@
-use nalgebra_glm::Vec3;
+use nalgebra_glm::{Vec3};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 #[derive(Clone)]
 pub struct Obj {
-    vertices: Vec<Vec3>,
+    pub vertices: Vec<Vec3>,
 }
 
 impl Obj {
