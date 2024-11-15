@@ -1,6 +1,7 @@
 use nalgebra_glm::{Vec2, Vec3};
 use crate::color::Color;
 
+#[derive(Clone, Debug)]
 pub struct Fragment {
     pub position: Vec2,
     pub color: Color,
