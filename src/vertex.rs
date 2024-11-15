@@ -13,19 +13,16 @@ pub struct Vertex {
 
 impl Vertex {
   pub fn new(position: Vec3, normal: Vec3, tex_coords: Vec2) -> Self {
-    Vertex {
-      position,
-      normal,
-      tex_coords,
-      color: Color::black(),
-      transformed_position: position,
-      transformed_normal: normal,
-    }
+      Vertex {
+          position,
+          normal,
+          tex_coords,
+          color: Color::black(), // Uso correcto de Color::black
+          transformed_position: position,
+          transformed_normal: normal,
+      }
   }
-
-
 }
-
 impl Default for Vertex {
   fn default() -> Self {
     Vertex {
