@@ -261,30 +261,6 @@ pub fn jupiter_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
 }
 
 
-pub fn moon_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  let base_gray = Color::new(180, 180, 180);  
-  let crater_edge_color = Color::new(120, 120, 120);  
-  let crater_center_color = Color::new(80, 80, 80);  
-
-  let t = uniforms.time as f32 * 0.1;  
-
-  let spherical_x = fragment.vertex_position.x / fragment.vertex_position.z.abs().max(0.1);
-  let spherical_y = fragment.vertex_position.y / fragment.vertex_position.z.abs().max(0.1);
-  let crater_noise = fbm_noise(&uniforms.noise, spherical_x * 30.0 + t, spherical_y * 30.0, 4);
-  let mask_noise = fbm_noise(&uniforms.noise, spherical_x * 60.0, spherical_y * 60.0, 5);
-  let depth_noise = uniforms.noise.get_noise_2d(
-      fragment.vertex_position.x * 300.0,
-      fragment.vertex_position.y * 300.0,
-  );
-  let crater_effect = if crater_noise > 0.55 && mask_noise > 0.3 {
-      crater_center_color.lerp(&crater_edge_color, depth_noise)
-  } else {
-      base_gray
-  };
-  let light_factor = 0.5 + 0.5 * fragment.vertex_position.z.clamp(-1.0, 1.0);
-  let illuminated_color = crater_effect * light_factor;
-  illuminated_color * fragment.intensity
-}
 
 
 
@@ -352,51 +328,3 @@ pub fn saturn_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
   final_color
 }
 
-pub fn comet_shader(fragment: &Fragment, uniforms: &Uniforms) -> Color {
-  let core_color = Color::new(255, 105, 180);    
-  let surface_color = Color::new(72, 61, 139);   
-  let crack_color = Color::new(50, 205, 50);     
-
-  let tail_inner_color = Color::new(0, 255, 255);  
-  let tail_outer_color = Color::new(255, 69, 0);   
-
-  let t = uniforms.time as f32 * 0.05;
-
-  let pulsate = (t.sin() * 0.5 + 0.5).clamp(0.3, 1.0); 
-
-  let surface_noise = fbm_noise(
-      &uniforms.noise,
-      fragment.vertex_position.x * 8.0,
-      fragment.vertex_position.y * 8.0,
-      4,  
-  );
-
-
-  let crack_noise = uniforms.noise.get_noise_2d(
-      fragment.vertex_position.x * 50.0 + t,
-      fragment.vertex_position.y * 50.0 + t,
-  );
-
-  let distance = (fragment.vertex_position.x.powi(2) + fragment.vertex_position.y.powi(2)).sqrt();
-
-  let tail_noise = uniforms.noise.get_noise_2d(
-      fragment.vertex_position.x * 15.0 + t,
-      fragment.vertex_position.y * 15.0 + t,
-  );
-  let tail_color = tail_inner_color.lerp(&tail_outer_color, tail_noise);
-  let tail_intensity = (1.0 - distance / 5.0).clamp(0.0, 1.0) * tail_noise;
-  let surface_effect = if crack_noise > 0.6 {
-      crack_color.lerp(&surface_color, surface_noise) * (1.0 - crack_noise).clamp(0.5, 1.0)
-  } else {
-      core_color * pulsate * (0.7 + surface_noise * 0.3)  
-  };
-  let light_factor = 0.5 + 0.5 * fragment.vertex_position.z.clamp(-1.0, 1.0);
-  let illuminated_surface = surface_effect * light_factor;
-  let final_color = if distance < 1.0 {
-      illuminated_surface * fragment.intensity  
-  } else {
-      tail_color * tail_intensity * fragment.intensity  
-  };
-
-  final_color
-}
