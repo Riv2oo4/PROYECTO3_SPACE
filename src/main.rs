@@ -10,16 +10,16 @@ mod color;
 mod fragment;
 mod shaders;
 mod camera;
-mod planet; // Nuevo módulo para manejar planetas
-
+mod planet; 
+use triangle::rasterize_parallel;
+use std::time::Instant;
 use crate::color::Color;
 use framebuffer::Framebuffer;
 use vertex::Vertex;
 use obj::Obj;
 use camera::Camera;
-use triangle::triangle;
-use shaders::{earth_shader, jupiter_shader, mars_shader, moon_shader, sun_shader, saturn_shader};
-use planet::Planet; // Importar la estructura Planet
+use shaders::{earth_shader, jupiter_shader, mars_shader,sun_shader, saturn_shader};
+use planet::Planet; 
 use fastnoise_lite::{FastNoiseLite, NoiseType};
 
 pub struct Uniforms<'a> {
@@ -37,42 +37,6 @@ fn create_noise() -> FastNoiseLite {
     noise
 }
 
-fn create_model_matrix(translation: Vec3, scale: f32, rotation: Vec3) -> Mat4 {
-    let (sin_x, cos_x) = rotation.x.sin_cos();
-    let (sin_y, cos_y) = rotation.y.sin_cos();
-    let (sin_z, cos_z) = rotation.z.sin_cos();
-
-    let rotation_matrix_x = Mat4::new(
-        1.0, 0.0, 0.0, 0.0,
-        0.0, cos_x, -sin_x, 0.0,
-        0.0, sin_x, cos_x, 0.0,
-        0.0, 0.0, 0.0, 1.0,
-    );
-
-    let rotation_matrix_y = Mat4::new(
-        cos_y, 0.0, sin_y, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        -sin_y, 0.0, cos_y, 0.0,
-        0.0, 0.0, 0.0, 1.0,
-    );
-
-    let rotation_matrix_z = Mat4::new(
-        cos_z, -sin_z, 0.0, 0.0,
-        sin_z, cos_z, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0,
-    );
-
-    let rotation_matrix = rotation_matrix_z * rotation_matrix_y * rotation_matrix_x;
-    let transform_matrix = Mat4::new(
-        scale, 0.0, 0.0, translation.x,
-        0.0, scale, 0.0, translation.y,
-        0.0, 0.0, scale, translation.z,
-        0.0, 0.0, 0.0, 1.0,
-    );
-
-    transform_matrix * rotation_matrix
-}
 
 fn create_view_matrix(eye: Vec3, center: Vec3, up: Vec3) -> Mat4 {
     look_at(&eye, &center, &up)
@@ -115,11 +79,13 @@ fn render(
             ]);
         }
     }
+    triangles.sort_by(|a, b| {
+        let z_a = (a[0].transformed_position.z + a[1].transformed_position.z + a[2].transformed_position.z) / 3.0;
+        let z_b = (b[0].transformed_position.z + b[1].transformed_position.z + b[2].transformed_position.z) / 3.0;
+        z_b.partial_cmp(&z_a).unwrap_or(std::cmp::Ordering::Equal)
+    });
 
-    let mut fragments = Vec::new();
-    for tri in &triangles {
-        fragments.extend(triangle(&tri[0], &tri[1], &tri[2]));
-    }
+    let fragments = rasterize_parallel(&triangles);
 
     for fragment in fragments {
         let x = fragment.position.x as usize;
@@ -143,34 +109,34 @@ fn render(
 
 fn handle_input(window: &Window, camera: &mut Camera) {
     if window.is_key_down(Key::W) {
-        camera.move_forward(5.0); // Avanzar
+        camera.move_forward(5.0); 
     }
     if window.is_key_down(Key::S) {
-        camera.move_forward(-5.0); // Retroceder
+        camera.move_forward(-5.0); 
     }
     if window.is_key_down(Key::A) {
-        camera.move_right(-5.0); // Moverse a la izquierda
+        camera.move_right(-5.0); 
     }
     if window.is_key_down(Key::D) {
-        camera.move_right(5.0); // Moverse a la derecha
+        camera.move_right(5.0); 
     }
     if window.is_key_down(Key::Space) {
-        camera.move_up(5.0); // Moverse hacia arriba
+        camera.move_up(5.0); 
     }
     if window.is_key_down(Key::LeftShift) {
-        camera.move_up(-5.0); // Moverse hacia abajo
+        camera.move_up(-5.0); 
     }
     if window.is_key_down(Key::Left) {
-        camera.rotate(0.05, 0.0); // Rotar a la izquierda
+        camera.rotate(0.05, 0.0); 
     }
     if window.is_key_down(Key::Right) {
-        camera.rotate(-0.05, 0.0); // Rotar a la derecha
+        camera.rotate(-0.05, 0.0); 
     }
     if window.is_key_down(Key::Up) {
-        camera.rotate(0.0, 0.05); // Rotar hacia arriba
+        camera.rotate(0.0, 0.05); 
     }
     if window.is_key_down(Key::Down) {
-        camera.rotate(0.0, -0.05); // Rotar hacia abajo
+        camera.rotate(0.0, -0.05); 
     }
 }
 
@@ -204,19 +170,26 @@ fn main() {
     let vertex_arrays = sphere_model.get_vertex_array();
 
     let mut planets = vec![
-        Planet::new(0.0, 0.0, 1.5, 0),   // Sol
-        Planet::new(100.0, 0.001, 0.5, 1), // Tierra
-        Planet::new(180.0, 0.0008, 0.7, 2), // Marte
-        Planet::new(260.0, 0.0006, 0.9, 3), // Júpiter
-        Planet::new(350.0, 0.0004, 1.2, 4), // Saturno
+        Planet::new(0.0, 0.0, 1.5, 0),   
+        Planet::new(25.0, 0.001, 0.5, 1), 
+        Planet::new(45.0, 0.0008, 0.7, 2), 
+        Planet::new(65.0, 0.0006, 0.9, 3), 
+        Planet::new(90.0, 0.0004, 1.2, 4), 
     ];
 
     let noise = create_noise();
-    let mut time = 0;
-    let mut shader_index = 0;
+    let  time = 0;
+    let mut frame_count = 0; 
+    let mut last_time = Instant::now(); 
 
     while window.is_open() {
-        time += 1;
+        if last_time.elapsed().as_secs_f32() >= 1.0 {
+            let fps = frame_count;
+            window.set_title(&format!("Sistema Solar"));
+            frame_count = 0;
+            last_time = Instant::now();
+        }
+        
 
         handle_input(&window, &mut camera);
 
