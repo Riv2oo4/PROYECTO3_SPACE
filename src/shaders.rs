@@ -53,12 +53,40 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
 }
 
 
-pub fn sun_shader(_fragment: &Fragment, uniforms: &Uniforms) -> Color {
-    let pulsate = ((uniforms.time as f32 * 0.01).sin() + 1.0) / 2.0;
+pub fn sun_shader(uniforms: &Uniforms) -> Color {
+  let pulsate = ((uniforms.time as f32 * 0.01).sin() + 1.0) / 2.0;
 
-    let core_color = Color::new(255, 140, 0);    
-    let flare_color = Color::new(255, 69, 0);    
-    core_color.lerp(&flare_color, pulsate)
+  let surface_noise = uniforms.noise.get_noise_2d(
+      uniforms.time as f32 * 0.1,
+      uniforms.time as f32 * 0.1,
+  );
+
+  let eruption_noise = uniforms.noise.get_noise_2d(
+      uniforms.time as f32 * 0.02,
+      (uniforms.time as f32 * 0.02).cos(),
+  );
+
+  let core_color = Color::new(255, 140, 0);    
+  let flare_color = Color::new(255, 69, 0);    
+  let corona_color = Color::new(255, 255, 160); 
+
+  let core = core_color.lerp(&flare_color, surface_noise);
+
+  let corona_intensity = (uniforms.time as f32 * 0.005).cos().abs();
+  let corona = corona_color * corona_intensity;
+
+  let flare_intensity = if eruption_noise > 0.8 {
+      1.5 
+  } else {
+      1.0 
+  };
+
+  let final_color = (core + corona) * pulsate * flare_intensity;
+
+  let halo_color = Color::new(255, 215, 0); 
+  let halo_intensity = ((uniforms.time as f32 * 0.002).sin().abs() * 0.5).clamp(0.0, 1.0);
+
+  final_color + halo_color * halo_intensity
 }
 
 
