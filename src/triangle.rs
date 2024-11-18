@@ -4,6 +4,7 @@ use crate::vertex::Vertex;
 use crate::color::Color;
 
 pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
+  
   let mut fragments = Vec::new();
   let (a, b, c) = (v1.transformed_position, v2.transformed_position, v3.transformed_position);
 
