@@ -1,5 +1,7 @@
 
-# 🌌 PROYECTO3_SPACE Travel: Simulación del Sistema Solar con Shaders
+# 🌌 
+![Sistema Solar](https://github.com/user-attachments/assets/730832f3-f207-4e4e-89d3-9f5830f97835)
+PROYECTO3_SPACE Travel: Simulación del Sistema Solar con Shaders
 
 ¡Bienvenido a **PROYECTO3_SPACE**! Este proyecto simula un sistema solar con planetas renderizados mediante shaders personalizados, utilizando Rust y gráficos 3D en una implementación desde cero. Aquí puedes explorar un universo virtual con texturas, iluminación y modelos 3D de planetas, todo optimizado para rendimiento.
 
@@ -105,5 +107,7 @@ nalgebra-glm = "0.14"
 rayon = "1.5"
 fastnoise-lite = "0.5"
 
-![Sistema Solar](https://github.com/user-attachments/assets/2069a5c5-8236-4d91-9926-a4b87b183b4c)
+
+
+
 
